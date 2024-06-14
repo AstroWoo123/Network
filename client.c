@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------------------
-// Network Lab                             Spring 2024                           System Programming
+// Network Lab                             Spring 2024 System Programming
 //
 /// @file
 /// @brief Client-side implementation of Network Lab
@@ -17,52 +17,55 @@
 /// Copyright (c) 2024, Architecture and Code Optimization Laboratory, SNU
 /// All rights reserved.
 ///
-/// Redistribution and use in source and binary forms, with or without modification, are permitted
-/// provided that the following conditions are met:
+/// Redistribution and use in source and binary forms, with or without
+/// modification, are permitted provided that the following conditions are met:
 ///
-/// - Redistributions of source code must retain the above copyright notice, this list of condi-
+/// - Redistributions of source code must retain the above copyright notice,
+/// this list of condi-
 ///   tions and the following disclaimer.
-/// - Redistributions in binary form must reproduce the above copyright notice, this list of condi-
-///   tions and the following disclaimer in the documentation and/or other materials provided with
-///   the distribution.
+/// - Redistributions in binary form must reproduce the above copyright notice,
+/// this list of condi-
+///   tions and the following disclaimer in the documentation and/or other
+///   materials provided with the distribution.
 ///
-/// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
-/// IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED  TO, THE IMPLIED  WARRANTIES OF MERCHANTABILITY
-/// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-/// CONTRIBUTORS  BE LIABLE FOR ANY DIRECT,  INDIRECT, INCIDENTAL, SPECIAL,  EXEMPLARY,  OR CONSE-
-/// QUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-/// LOSS OF USE, DATA,  OR PROFITS; OR BUSINESS INTERRUPTION)  HOWEVER CAUSED AND ON ANY THEORY OF
-/// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-/// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-/// DAMAGE.
+/// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+/// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED  TO, THE
+/// IMPLIED  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+/// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS  BE
+/// LIABLE FOR ANY DIRECT,  INDIRECT, INCIDENTAL, SPECIAL,  EXEMPLARY,  OR
+/// CONSE- QUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,  PROCUREMENT OF
+/// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,  OR PROFITS; OR BUSINESS
+/// INTERRUPTION)  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+/// CONTRACT, STRICT LIABILITY,  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+/// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+/// POSSIBILITY OF SUCH DAMAGE.
 //--------------------------------------------------------------------------------------------------
 
 #define _GNU_SOURCE
+#include <errno.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
-#include <errno.h>
 #include <time.h>
 
-#include <sys/socket.h>
-#include <unistd.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include "net.h"
 #include "burger.h"
+#include "net.h"
 
 /// @brief client error function
 /// @param socketfd file drescriptor of the socket
 void error_client(int socketfd) {
-	close(socketfd);
-  	pthread_exit(NULL);
+  close(socketfd);
+  pthread_exit(NULL);
 }
 
 /// @brief client task for connection thread
-void *thread_task(void *data)
-{
+void *thread_task(void *data) {
   struct addrinfo *ai, *ai_it;
   size_t read, sent, buflen;
   int serverfd = -1;
@@ -83,25 +86,23 @@ void *thread_task(void *data)
     goto err;
   }
 
-  for(ai_it = ai; ai_it != NULL; ai_it = ai_it -> ai_next) {
-    serverfd = socket(ai_it -> ai_family, ai_it -> ai_socktype, ai_it -> ai_protocol);
-    if(serverfd != -1){
-      if(connect(serverfd, ai_it -> ai_addr, ai_it -> ai_addrlen) == 0){
+  for (ai_it = ai; ai_it != NULL; ai_it = ai_it->ai_next) {
+    serverfd = socket(ai_it->ai_family, ai_it->ai_socktype, ai_it->ai_protocol);
+    if (serverfd != -1) {
+      if (connect(serverfd, ai_it->ai_addr, ai_it->ai_addrlen) == 0) {
         break;
-      }
-      else {
+      } else {
         close(serverfd);
       }
     }
   }
-  freeaddrinfo(ai);
-  if (ai_it == NULL){
+  if (ai_it == NULL) {
     printf("Cannot connect with server\n");
     goto err;
   }
 
   read = get_line(serverfd, &buffer, &buflen);
-  if(read <= 0) {
+  if (read <= 0) {
     printf("Cannot read data from server\n");
     goto err;
   }
@@ -110,7 +111,7 @@ void *thread_task(void *data)
   memset(buffer, 0, BUF_SIZE);
 
   // Choose the number of orders for request
-  if(BURGER_NUM_RAND)
+  if (BURGER_NUM_RAND)
     burger_count = rand() % MAX_BURGERS + 1;
   else
     burger_count = MAX_BURGERS;
@@ -119,20 +120,21 @@ void *thread_task(void *data)
 
   // Randomly choose burger type for each order
   choices = (int *)malloc(sizeof(int) * burger_count);
-  for (int i=0; i<burger_count; i++){
+  for (int i = 0; i < burger_count; i++) {
     int choice = rand() % BURGER_TYPE_MAX;
 
     // concat burger to buffer string
     char *temp_buffer;
-    if (i == 0){
+    if (i == 0) {
       int res = asprintf(&temp_buffer, "%s", burger_names[choice]);
-      if (res<0) perror("asprintf");
-    }
-    else{
+      if (res < 0)
+        perror("asprintf");
+    } else {
       int res = asprintf(&temp_buffer, "%s %s", buffer, burger_names[choice]);
-      if (res<0) perror("asprintf");
+      if (res < 0)
+        perror("asprintf");
     }
-    
+
     strncpy(buffer, temp_buffer, BUF_SIZE);
     free(temp_buffer);
 
@@ -140,7 +142,7 @@ void *thread_task(void *data)
   }
 
   printf("[Thread %lu] To server: Can I have %s burger(s)?\n", tid, buffer);
-  
+
   int str_len = strnlen(buffer, BUF_SIZE);
   buffer[str_len] = '\n';
 
@@ -162,16 +164,15 @@ void *thread_task(void *data)
   printf("[Thread %lu] From server: %s", tid, buffer);
 
   free(choices);
-  
-  err:
+
+err:
   close(serverfd);
   freeaddrinfo(ai);
   pthread_exit(NULL);
 }
 
 /// @brief program entry point
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
   int i;
   int num_threads;
   pthread_t *threads;
@@ -188,7 +189,8 @@ int main(int argc, char const *argv[])
     return EXIT_FAILURE;
   }
   for (i = 0; i < num_threads; i++) {
-    if(pthread_create(&threads[i], NULL, thread_task, NULL) != 0){
+    if (pthread_create(&threads[i], NULL, thread_task, NULL) != 0) {
+      printf("thread %d created", i); // delete
       perror("pthread_create");
       return EXIT_FAILURE;
     }
