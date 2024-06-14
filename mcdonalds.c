@@ -308,16 +308,16 @@ void error_client(int clientfd, void *newsock, char *buffer) {
 /// @brief client task for client thread
 /// @param newsock socketID of the client as void*
 void *serve_client(void *newsock) {
-  ssize_t read, sent;            // size of read and sent message
-  size_t msglen;                 // message buffer size
-  char *message, *buffer;        // message buffers
-  char *burger;                  // parsed burger string
-  unsigned int customerID;       // customer ID
-  enum burger_type *types;       // list of burger types
-  Node **order_list = NULL;      // list of orders issued
-  int ret, i, clientfd;          // misc. values
-  unsigned int burger_count = 0; // number of burgers in request
-  Node *first_order;             // first order of requests
+  ssize_t read, sent;                    // size of read and sent message
+  size_t msglen;                         // message buffer size
+  char *message, *buffer;                // message buffers
+  char *burger;                          // parsed burger string
+  unsigned int customerID;               // customer ID
+  enum burger_type *types = malloc(400); // list of burger types
+  Node **order_list = NULL;              // list of orders issued
+  int ret, clientfd;                     // misc. values
+  unsigned int burger_count = 0;         // number of burgers in request
+  Node *first_order;                     // first order of requests
 
   clientfd = *(int *)newsock;
   buffer = (char *)malloc(BUF_SIZE);
@@ -435,7 +435,7 @@ err:
 
 /// @brief start server listening
 void start_server() {
-  int listenfd = -1, clientfd, res, opt = 1, *newsock;
+  int listenfd = -1, clientfd, res;
   unsigned int addrlen;
   struct sockaddr_in client;
   struct addrinfo *ai, *ai_it;
