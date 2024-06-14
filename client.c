@@ -67,9 +67,10 @@ void error_client(int socketfd) {
 /// @brief client task for connection thread
 void *thread_task(void *data) {
   struct addrinfo *ai, *ai_it;
-  size_t read, sent, buflen;
+  size_t read, sent, buflen, buflen1;
   int serverfd = -1;
   char *buffer;
+  char *buffer1;
   pthread_t tid;
   int *choices;
   unsigned int burger_count;
@@ -157,8 +158,9 @@ void *thread_task(void *data) {
   }
 
   // Get final message from the server
-  memset(buffer, 0, BUF_SIZE);
-  read = get_line(serverfd, &buffer, &buflen);
+  buffer1 = (char *)malloc(BUF_SIZE);
+  buflen1 = BUF_SIZE;
+  read = get_line(serverfd, &buffer1, &buflen1);
   if (read <= 0) {
     printf("Cannot read data from server\n");
     goto err;
