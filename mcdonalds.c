@@ -113,6 +113,7 @@ pthread_mutex_t kitchen_mutex;         ///< shared mutex for kitchen threads
 Node **issue_orders(unsigned int customerID, enum burger_type *types,
                     unsigned int burger_count) {
   // List of node pointers that are to be issued
+  printf("issue ordered");
   Node **node_list = (Node **)malloc(sizeof(Node *) * burger_count);
 
   // Initialize order string for request
@@ -309,11 +310,9 @@ void error_client(int clientfd, void *newsock, char *buffer) {
 /// @param newsock socketID of the client as void*
 void *serve_client(void *newsock) {
   ssize_t read, sent;                    // size of read and sent message
-  size_t msglen;                         // message buffer size
-  char *message, *buffer;                // message buffers
-  char *burger;                          // parsed burger string
+  char *message, *message1, *buffer;                // message buffers
   unsigned int customerID;               // customer ID
-  enum burger_type *types = malloc(400); // list of burger types
+  enum burger_type *types = malloc(MAX_BURGERS * sizeof(enum burger_type)); // list of burger types
   Node **order_list = NULL;              // list of orders issued
   int ret, clientfd;                     // misc. values
   unsigned int burger_count = 0;         // number of burgers in request
@@ -321,7 +320,6 @@ void *serve_client(void *newsock) {
 
   clientfd = *(int *)newsock;
   buffer = (char *)malloc(BUF_SIZE);
-  msglen = BUF_SIZE;
 
   // Get customer ID
   pthread_mutex_lock(&server_ctx.lock);
@@ -332,6 +330,7 @@ void *serve_client(void *newsock) {
 
   // Generate welcome message
   ret = asprintf(&message, "Welcome to McDonald's, customer #%d\n", customerID);
+  printf("message has been passed");
   if (ret < 0) {
     perror("asprintf");
     return NULL;
@@ -357,36 +356,41 @@ void *serve_client(void *newsock) {
   // - Tip: try using strtok_r() with while statement
   // TODO
 
-  char *rest = buffer;
-  char *token;
+  char rest[50];
+  char* ret_ptr;
+  char* next_ptr;
+  strcpy(rest, buffer);
   int j = 0;
 
-  while ((token = strtok_r(rest, " ", &rest)) != NULL) {
-    if (strcmp(token, burger_names[0]) == 0) {
+  ret_ptr = strtok_r(rest, " ", &next_ptr);
+
+  while (ret_ptr) {
+    if (strcmp(ret_ptr, burger_names[0]) == 0) {
       types[j] = BURGER_BIGMAC;
       burger_count += 1;
-    } else if (strcmp(token, burger_names[1]) == 0) {
+    } else if (strcmp(ret_ptr, burger_names[1]) == 0) {
       types[j] = BURGER_CHEESE;
       burger_count += 1;
-    } else if (strcmp(token, burger_names[2]) == 0) {
+    } else if (strcmp(ret_ptr, burger_names[2]) == 0) {
       types[j] = BURGER_CHICKEN;
       burger_count += 1;
-    } else if (strcmp(token, burger_names[3]) == 0) {
+    } else if (strcmp(ret_ptr, burger_names[3]) == 0) {
       types[j] = BURGER_BULGOGI;
       burger_count += 1;
     } else {
       types[j] = BURGER_TYPE_MAX;
     }
     if (types[j] == BURGER_TYPE_MAX) {
-      ret = asprintf(&message, "Your %s is not available! Goodbye!\n", burger);
-      sent = put_line(clientfd, message, ret);
+      ret = asprintf(&message1, "Your %s is not available! Goodbye!\n", ret_ptr);
+      sent = put_line(clientfd, message1, ret);
       if (sent <= 0) {
         printf("Error: cannot send data to client\n");
       }
-      free(message);
+      free(message1);
       goto err;
     }
     j++;
+    ret_ptr = strtok_r(NULL, " ", &next_ptr);
   }
 
   // Issue orders to kitchen and wait
@@ -395,7 +399,6 @@ void *serve_client(void *newsock) {
   // - Tip3: all orders in a request share the same `cond` and `cond_mutex`,
   //         so access such variables through the first order
   // TODO
-
   order_list = issue_orders(customerID, types, burger_count);
   first_order = order_list[0];
   pthread_cond_wait(first_order->cond, first_order->cond_mutex);
@@ -441,7 +444,7 @@ void start_server() {
   struct addrinfo *ai, *ai_it;
 
   ai = getsocklist(NULL, PORT, AF_INET, SOCK_STREAM, 1, &res);
-  ;
+  
   if (res != 0)
     perror(gai_strerror(res));
 
@@ -449,7 +452,7 @@ void start_server() {
     listenfd = socket(ai_it->ai_family, ai_it->ai_socktype, ai_it->ai_protocol);
     addrlen = ai_it->ai_addrlen;
     if (listenfd != -1) {
-      if (bind(listenfd, ai_it->ai_addr, addrlen) == 0 &&
+      if ((bind(listenfd, ai_it->ai_addr, addrlen) == 0) &&
           (listen(listenfd, 32) == 0)) {
         break;
       } else {
@@ -457,6 +460,7 @@ void start_server() {
       }
     }
   }
+  printf("listenfd established");
   freeaddrinfo(ai);
   if (ai_it == NULL)
     perror("Cannot bind");
@@ -468,6 +472,7 @@ void start_server() {
 
   while (1) {
     clientfd = accept(listenfd, (struct sockaddr *)&client, &addrlen);
+    printf("accepted");
     if (clientfd > 0) {
       dump_sockaddr((struct sockaddr *)&client);
       if (server_ctx.total_queueing < CUSTOMER_MAX) {
@@ -475,6 +480,7 @@ void start_server() {
         int *clientfd_copy = malloc(sizeof(int));
         *clientfd_copy = clientfd;
         pthread_t tid;
+        printf("created");
         if (pthread_create(&tid, NULL, serve_client, clientfd_copy) != 0) {
           printf("Error: pthraed_create failed\n");
           continue;
@@ -608,6 +614,7 @@ void init_mcdonalds(void) {
     pthread_create(&kitchen_thread[i], NULL, kitchen_task, NULL);
     pthread_detach(kitchen_thread[i]);
   }
+  printf("init finished");
 }
 
 /// @brief program entry point

@@ -89,9 +89,12 @@ void *thread_task(void *data) {
   for (ai_it = ai; ai_it != NULL; ai_it = ai_it->ai_next) {
     serverfd = socket(ai_it->ai_family, ai_it->ai_socktype, ai_it->ai_protocol);
     if (serverfd != -1) {
+      printf("serverfd is not -1");
       if (connect(serverfd, ai_it->ai_addr, ai_it->ai_addrlen) == 0) {
+        printf("connected!");
         break;
       } else {
+        printf("not connected!");
         close(serverfd);
       }
     }
@@ -190,7 +193,6 @@ int main(int argc, char const *argv[]) {
   }
   for (i = 0; i < num_threads; i++) {
     if (pthread_create(&threads[i], NULL, thread_task, NULL) != 0) {
-      printf("thread %d created", i); // delete
       perror("pthread_create");
       return EXIT_FAILURE;
     }
