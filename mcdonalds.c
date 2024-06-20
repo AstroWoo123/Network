@@ -389,15 +389,15 @@ void *serve_client(void *newsock) {
     } else {
       types[j] = BURGER_TYPE_MAX;
     }
-    if (types[j] == BURGER_TYPE_MAX) {
-      ret = asprintf(&message1, "Your %s is not available! Goodbye!\n", ret_ptr);
-      sent = put_line(clientfd, message1, ret);
-      if (sent <= 0) {
-        printf("Error: cannot send data to client\n");
-      }
-      free(message1);
-      goto err;
-    }
+    //if (types[j] == BURGER_TYPE_MAX) {
+      //ret = asprintf(&message1, "Your %s is not available! Goodbye!\n", ret_ptr);
+      //sent = put_line(clientfd, message1, ret);
+      //if (sent <= 0) {
+        //printf("Error: cannot send data to client\n");
+      //}
+      //free(message1);
+      //goto err;
+    //}
     j++;
     ret_ptr = strtok_r(NULL, " ", &next_ptr);
 
@@ -422,7 +422,7 @@ void *serve_client(void *newsock) {
   // order
   if (*(first_order->remain_count) == 0) {
     //printf("Final order: %s", *(first_order -> order_str));
-    ret = asprintf(&message2, "My name is astro");
+    ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n", *(first_order->order_str));
     //printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
     if (sent <= 0) {
