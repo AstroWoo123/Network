@@ -362,10 +362,15 @@ void *serve_client(void *newsock) {
   // - Tip: try using strtok_r() with while statement
   // TODO
 
+  char* buffer1 = "cheese cheese bulgogi\n";
   char rest[50];
   char* ret_ptr;
   char* next_ptr;
-  strcpy(rest, buffer); 
+  strcpy(rest, buffer1); 
+  int lentoescape = strlen(rest);
+  if (rest[lentoescape - 1] == '\n') {
+    rest[lentoescape - 1] = '\0';
+  }
   int j = 0;
 
   //printf("%s", rest);
