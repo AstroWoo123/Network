@@ -101,7 +101,7 @@ int listenfd;                          ///< listen file descriptor
 struct mcdonalds_ctx server_ctx;       ///< keeps server context
 sig_atomic_t keep_running = 1;         ///< keeps all the threads running
 pthread_t kitchen_thread[NUM_KITCHEN]; ///< thread for kitchen
-pthread_mutex_t kitchen_mutex;         ///< shared mutex for kitchen threads
+pthread_mutex_t kitchen_mutex[CUSTOMER_MAX];         ///< shared mutex for kitchen threads
 
 /// @}
 
@@ -146,8 +146,6 @@ Node **issue_orders(unsigned int customerID, enum burger_type *types,
     new_node->order_str = order_str;
     new_node->cond = cond;
     new_node->cond_mutex = cond_mutex;
-    //printf("%d", types[i]);
-    //printf("%s is a order string", *order_str);
     //
     // TODO: Initialize other Node variables if added any
     //
@@ -167,7 +165,6 @@ Node **issue_orders(unsigned int customerID, enum burger_type *types,
     // Add new node to node list
     node_list[i] = new_node;
   }
-  //printf("for ended");
 
   // Return node list
   return node_list;
@@ -238,7 +235,6 @@ void make_burger(Node *order) {
     *(order->order_str) = (char *)malloc(sizeof(char) * str_len);
     strncpy(*(order->order_str), burger_names[type], str_len);
   }
-  //printf("order string is %s\n", *(order->order_str));
 
   sleep(1);
   // ===================
@@ -272,11 +268,9 @@ void *kitchen_task(void *dummy) {
     // - Use make_burger()
     // - Reduce `remain_count` by one
     // TODO
-    pthread_mutex_lock(&kitchen_mutex);
+    pthread_mutex_lock(&kitchen_mutex[customerID]);
     make_burger(order);
-    pthread_mutex_unlock(&kitchen_mutex);
-    //printf("order string is %s\n", *(order->order_str));
-    //printf("customerID %u, %s at the time of remain count %d", order -> customerID, *(order -> order_str), *(order -> remain_count));
+    pthread_mutex_unlock(&kitchen_mutex[customerID]);
     *(order->remain_count) -= 1;
 
     printf("[Thread %lu] %s burger for customer %u is ready\n", tid,
@@ -285,7 +279,6 @@ void *kitchen_task(void *dummy) {
     // If every burger is made, fire signal to serving thread
     if (*(order->remain_count) == 0) {
       printf("[Thread %lu] all orders done for customer %u\n", tid, customerID);
-      //printf("These are orders: %s :end of order", *(order -> order_str));
       pthread_cond_signal(order->cond);
     }
 
@@ -362,7 +355,7 @@ void *serve_client(void *newsock) {
   // - Tip: try using strtok_r() with while statement
   // TODO
 
-  char rest[50];
+  char rest[8 * MAX_BURGERS + 30];
   char* ret_ptr;
   char* next_ptr;
   strcpy(rest, buffer); 
@@ -406,9 +399,6 @@ void *serve_client(void *newsock) {
 
   }
 
-  //printf("%d", types[0]);
-  //printf("%d", types[1]);
-  //printf("%d", types[2]);
 
   // Issue orders to kitchen and wait
   // - Tip: use pthread_cond_wait() to wait
@@ -426,7 +416,7 @@ void *serve_client(void *newsock) {
   if (*(first_order->remain_count) == 0) {
     //printf("Final order: %s", *(first_order -> order_str));
     ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n", *(first_order->order_str));
-    printf("Final sent: %s", message2);
+    //printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
     if (sent <= 0) {
       printf("Error: cannot send data to client\n");
@@ -623,9 +613,9 @@ void init_mcdonalds(void) {
   for (i = 0; i < BURGER_TYPE_MAX; i++) {
     server_ctx.total_burgers[i] = 0;
   }
-
-  pthread_mutex_init(&kitchen_mutex, NULL);
-
+  for(i = 0; i < CUSTOMER_MAX; i++){
+    pthread_mutex_init(&kitchen_mutex[i], NULL);
+  }
   //printf("init_mcdonalds completed"); //delete
   for (i = 0; i < NUM_KITCHEN; i++) {
     pthread_create(&kitchen_thread[i], NULL, kitchen_task, NULL);
