@@ -422,7 +422,7 @@ void *serve_client(void *newsock) {
   // order
   if (*(first_order->remain_count) == 0) {
     //printf("Final order: %s", *(first_order -> order_str));
-    ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n",
+    ret = asprintf(&message2, "My name is astro",
                    *(first_order->order_str));
     //printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
