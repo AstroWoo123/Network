@@ -158,9 +158,8 @@ void *thread_task(void *data) {
   }
 
   // Get final message from the server
-  buffer1 = (char *)malloc(BUF_SIZE);
-  buflen1 = BUF_SIZE;
-  read = get_line(serverfd, &buffer1, &buflen1);
+  memset(buffer, 0, BUF_SIZE);
+  read = get_line(serverfd, &buffer, &buflen);
   printf("This is the final message from server: %s\n", buffer1);
   if (read <= 0) {
     printf("Cannot read data from server\n");
