@@ -166,7 +166,7 @@ void *thread_task(void *data) {
     goto err;
   }
 
-  printf("[Thread %lu] From server: %s", tid, buffer);
+  printf("[Thread %lu] From server: %s", tid, buffer1);
 
   free(choices);
 
