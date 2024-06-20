@@ -89,12 +89,9 @@ void *thread_task(void *data) {
   for (ai_it = ai; ai_it != NULL; ai_it = ai_it->ai_next) {
     serverfd = socket(ai_it->ai_family, ai_it->ai_socktype, ai_it->ai_protocol);
     if (serverfd != -1) {
-      printf("serverfd is not -1");
       if (connect(serverfd, ai_it->ai_addr, ai_it->ai_addrlen) == 0) {
-        printf("connected!");
         break;
       } else {
-        printf("not connected!");
         close(serverfd);
       }
     }
@@ -159,7 +156,6 @@ void *thread_task(void *data) {
   // Get final message from the server
   memset(buffer, 0, BUF_SIZE);
   read = get_line(serverfd, &buffer, &buflen);
-  printf("This is the final message from server: %s\n", buffer);
   if (read <= 0) {
     printf("Cannot read data from server\n");
     goto err;

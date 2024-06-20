@@ -310,7 +310,7 @@ void error_client(int clientfd, void *newsock, char *buffer) {
 /// @param newsock socketID of the client as void*
 void *serve_client(void *newsock) {
   ssize_t read, sent;                    // size of read and sent message
-  char *message, *message2, *buffer;                // message buffers
+  char *message, *message1, *message2, *buffer;                // message buffers
   unsigned int customerID;               // customer ID
   enum burger_type *types = malloc(MAX_BURGERS * sizeof(enum burger_type)); // list of burger types
   Node **order_list = NULL;              // list of orders issued
@@ -385,15 +385,15 @@ void *serve_client(void *newsock) {
     } else {
       types[j] = BURGER_TYPE_MAX;
     }
-    //if (types[j] == BURGER_TYPE_MAX) {
-      //ret = asprintf(&message1, "Your %s is not available! Goodbye!\n", ret_ptr);
-      //sent = put_line(clientfd, message1, ret);
-      //if (sent <= 0) {
-        //printf("Error: cannot send data to client\n");
-      //}
-      //free(message1);
-      //goto err;
-    //}
+    if (types[j] == BURGER_TYPE_MAX) {
+      ret = asprintf(&message1, "Your %s is not available! Goodbye!\n", ret_ptr);
+      sent = put_line(clientfd, message1, ret);
+      if (sent <= 0) {
+        printf("Error: cannot send data to client\n");
+      }
+      free(message1);
+      goto err;
+    }
     j++;
     ret_ptr = strtok_r(NULL, " ", &next_ptr);
 
@@ -414,9 +414,7 @@ void *serve_client(void *newsock) {
   // All orders share the same `remain_count`, so access it through the first
   // order
   if (*(first_order->remain_count) == 0) {
-    //printf("Final order: %s", *(first_order -> order_str));
     ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n", *(first_order->order_str));
-    //printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
     if (sent <= 0) {
       printf("Error: cannot send data to client\n");
