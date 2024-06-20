@@ -403,9 +403,9 @@ void *serve_client(void *newsock) {
 
   }
 
-  printf("%d", types[0]);
-  printf("%d", types[1]);
-  printf("%d", types[2]);
+  //printf("%d", types[0]);
+  //printf("%d", types[1]);
+  //printf("%d", types[2]);
 
   // Issue orders to kitchen and wait
   // - Tip: use pthread_cond_wait() to wait
@@ -421,9 +421,10 @@ void *serve_client(void *newsock) {
   // All orders share the same `remain_count`, so access it through the first
   // order
   if (*(first_order->remain_count) == 0) {
-    //printf("%s", *(first_order -> order_str));
+    //printf("Final order: %s", *(first_order -> order_str));
     ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n",
                    *(first_order->order_str));
+    //printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
     if (sent <= 0) {
       printf("Error: cannot send data to client\n");
