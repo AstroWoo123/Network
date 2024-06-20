@@ -146,8 +146,8 @@ void *thread_task(void *data) {
 
   printf("[Thread %lu] To server: Can I have %s burger(s)?\n", tid, buffer);
 
-  int str_len = strnlen(buffer, BUF_SIZE);
-  buffer[str_len] = '\n';
+  //int str_len = strnlen(buffer, BUF_SIZE);
+  //buffer[str_len] = '\n';
 
   // Send request to the server
   sent = put_line(serverfd, buffer, strlen(buffer));

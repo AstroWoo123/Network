@@ -317,7 +317,7 @@ void error_client(int clientfd, void *newsock, char *buffer) {
 /// @param newsock socketID of the client as void*
 void *serve_client(void *newsock) {
   ssize_t read, sent;                    // size of read and sent message
-  char *message, *message1, *message2, *buffer;                // message buffers
+  char *message, *message2, *buffer;                // message buffers
   unsigned int customerID;               // customer ID
   enum burger_type *types = malloc(MAX_BURGERS * sizeof(enum burger_type)); // list of burger types
   Node **order_list = NULL;              // list of orders issued
@@ -362,7 +362,6 @@ void *serve_client(void *newsock) {
   // - Tip: try using strtok_r() with while statement
   // TODO
 
-  //char* buffer1 = "cheese cheese bulgogi";
   char rest[50];
   char* ret_ptr;
   char* next_ptr;
@@ -423,7 +422,7 @@ void *serve_client(void *newsock) {
   if (*(first_order->remain_count) == 0) {
     //printf("Final order: %s", *(first_order -> order_str));
     ret = asprintf(&message2, "Your order(%s) is ready! Goodbye!\n", *(first_order->order_str));
-    //printf("Final sent: %s", message2);
+    printf("Final sent: %s", message2);
     sent = put_line(clientfd, message2, ret);
     if (sent <= 0) {
       printf("Error: cannot send data to client\n");
